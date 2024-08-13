@@ -69,7 +69,7 @@ This software is for ethical use only.
 
 ---
 
-🔗 **Buy Now**: [Donate Here](https://flashcipher.shop//)
+🔗 **Buy Now**: [Donate Here](https://flashcipher.shop)
 
 ## Special Features 💎
 
