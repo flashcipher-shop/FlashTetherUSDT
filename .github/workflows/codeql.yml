@@ -2,36 +2,31 @@ name: Fetch Etherscan Logs and CodeQL Analysis
 
 on:
   schedule:
-    - cron: "0 */2 * * *"  # Runs every 2 hours for fetching logs
-    - cron: '0 0 * * *'  # Runs daily for CodeQL analysis
-  workflow_dispatch:  # Allows manual triggers
+    - cron: "0 */2 * * *" # Runs every 2 hours for fetching logs
+    - cron: '0 0 * * *' # Runs daily for CodeQL analysis
+  workflow_dispatch: # Allows manual triggers
   pull_request:
     branches:
-      - main  # Allows Dependabot to trigger the workflow
+      - main # Allows Dependabot to trigger the workflow
 
 jobs:
   fetch-etherscan-logs:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
-
       - name: Fetch logs from Etherscan API and create random JSON files
         env:
           ETHERSCAN_API: ${{ secrets.ETHERSCAN_API }}
         run: |
           mkdir -p FlashTetherUSDT/transaction/api/data
           response=$(curl -s "https://api.etherscan.io/api?module=logs&action=getLogs&address=0xbd3531da5cf5857e7cfaa92426877b022e612cf8&fromBlock=12878196&toBlock=12878196&page=1&offset=1000&apikey=$ETHERSCAN_API")
-
           status=$(echo "$response" | jq -r '.status')
           message=$(echo "$response" | jq -r '.message')
-
           if [ "$status" = "1" ] && [ "$message" = "OK" ]; then
             echo "$response" | jq -c '.result[]' | shuf -n 10 | while read log_entry; do
               address=$(echo "$log_entry" | jq -r '.address')
@@ -43,10 +38,9 @@ jobs:
             echo "API response invalid: $message"
             exit 1
           fi
-
       - name: Commit and push the JSON files
         env:
-          GITPAT: ${{ secrets.GITPAT }}  # Use the PAT stored in secrets
+          GITPAT: ${{ secrets.GITPAT }}
         run: |
           git config --local user.email "likhonexe@gmail.com"
           git config --local user.name "@nectariferous"
@@ -56,18 +50,14 @@ jobs:
 
   codeql-analysis:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v2
         with:
-          languages: ['javascript', 'python']  # Specify languages here
-
+          languages: ['javascript', 'python']
       - name: Autobuild
         uses: github/codeql-action/autobuild@v2
-
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v2
