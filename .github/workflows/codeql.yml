@@ -1,8 +1,9 @@
-name: Fetch Etherscan Logs
+name: Fetch Etherscan Logs and CodeQL Analysis
 
 on:
   schedule:
-    - cron: "0 */2 * * *"  # Runs every 2 hours
+    - cron: "0 */2 * * *"  # Runs every 2 hours for fetching logs
+    - cron: '0 0 * * *'  # Runs daily for CodeQL analysis
   workflow_dispatch:  # Allows manual triggers
   pull_request:
     branches:
@@ -16,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js for Dependabot
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '16'
@@ -53,8 +54,20 @@ jobs:
           git commit -m "Add 10 random Etherscan API logs for $(date +"%Y-%m-%d %H:%M:%S")"
           git push https://$GITPAT@github.com/${{ github.repository }}.git HEAD:main
 
-dependabot:
-  package-ecosystem: "npm"
-  directory: "/"
-  schedule:
-    interval: "weekly"
+  codeql-analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v2
+        with:
+          languages: ['javascript', 'python']  # Specify languages here
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v2
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v2
