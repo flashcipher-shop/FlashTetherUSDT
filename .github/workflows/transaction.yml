@@ -1,0 +1,29 @@
+name: Fetch Etherscan Logs
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"  # Runs every 12 hours
+  workflow_dispatch:  # Allows you to manually trigger the workflow
+
+jobs:
+  fetch-etherscan-logs:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Fetch logs from Etherscan API
+        run: |
+          mkdir -p FlashTetherUSDT/transaction/api/data
+          current_time=$(date +"%Y%m%d_%H%M%S")
+          response=$(curl -s "https://api.etherscan.io/api?module=logs&action=getLogs&address=0xbd3531da5cf5857e7cfaa92426877b022e612cf8&fromBlock=12878196&toBlock=12878196&page=1&offset=1000&apikey=AJ386JQ8ZAXWVIFKTDVCJHUQEGQUDK25DH")
+          echo "$response" > "FlashTetherUSDT/transaction/api/data/0xbd3531da5cf5857e7cfaa92426877b022e612cf8_$current_time.json"
+      
+      - name: Commit and push the JSON file
+        run: |
+          git config --local user.email "actions@github.com"
+          git config --local user.name "GitHub Actions"
+          git add FlashTetherUSDT/transaction/api/data/
+          git commit -m "Add Etherscan API response for $(date +"%Y-%m-%d %H:%M:%S")"
+          git push
