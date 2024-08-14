@@ -1,0 +1,59 @@
+name: Daily Commit
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'  # Runs every 5 minutes
+  workflow_dispatch:
+  
+jobs:
+  commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Make changes
+        run: |
+          echo "Commit made at $(date '+%Y-%m-%d %H:%M:%S')" > log.txt
+
+      - name: Pull latest changes
+        run: git pull
+
+      - name: Commit and Push for Multiple Users
+        run: |
+          # List of users
+          users=(
+            "huangsunchuangyu@outlook.com:rNLKJA"
+            "ibbles@hotmail.com:Martin Nilsson"
+            "park.heekang33@gmail.com:Heekang Park"
+            "zhiweik@gmail.com:Chen Zhiwei"
+            "benjamescunningham@gmail.com:Ben Cunningham"
+            "gmail@hdknr.com:hdknr"
+            "benelog@gmail.com:Sanghyuk Jung"
+            "gbrouwer5151@gmail.com:Gijs Joost Brouwer"
+            "mercedes@gmail.com:Mercedes-benz"
+            "lammborghini@gmail.com:Lamborghini"
+            "anushkarajput2907@gmail.com:anushka"
+            "hansolo@gmail.com:Han Solo"
+            "pataraco@gmail.com:Patrick Raco"
+          )
+
+          for user in "${users[@]}"; do
+            email="${user%%:*}"
+            name="${user##*:}"
+            
+            # Set Git user details globally
+            git config --global user.email "$email"
+            git config --global user.name "$name"
+            
+            # Make the changes for the user
+            echo "Commit by $name at $(date '+%Y-%m-%d %H:%M:%S')" > "log_${name// /_}.txt"
+            
+            # Stage and commit the changes
+            git add "log_${name// /_}.txt"
+            git commit -m "Daily update by $name at $(date '+%Y-%m-%d %H:%M:%S')"
+          done
+
+      - name: Push Changes
+        run: git push
