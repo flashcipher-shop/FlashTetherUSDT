@@ -42,8 +42,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.TOKENS }}  # Use the token from repository secrets
         run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
+          git config --local user.email "likhonexe@gmail.com"
+          git config --local user.name "@nectariferous"
           git add FlashTetherUSDT/transaction/api/data/
           git commit -m "Add 10 random Etherscan API logs for $(date +"%Y-%m-%d %H:%M:%S")"
           git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:main
