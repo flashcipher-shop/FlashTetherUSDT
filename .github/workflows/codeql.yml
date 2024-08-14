@@ -3,7 +3,10 @@ name: Fetch Etherscan Logs
 on:
   schedule:
     - cron: "0 */2 * * *"  # Runs every 2 hours
-  workflow_dispatch:  # Allows you to manually trigger the workflow
+  workflow_dispatch:  # Allows manual triggers
+  pull_request:
+    branches:
+      - main  # Allows Dependabot to trigger the workflow
 
 jobs:
   fetch-etherscan-logs:
@@ -11,7 +14,12 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js for Dependabot
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
 
       - name: Fetch logs from Etherscan API and create random JSON files
         env:
@@ -20,30 +28,33 @@ jobs:
           mkdir -p FlashTetherUSDT/transaction/api/data
           response=$(curl -s "https://api.etherscan.io/api?module=logs&action=getLogs&address=0xbd3531da5cf5857e7cfaa92426877b022e612cf8&fromBlock=12878196&toBlock=12878196&page=1&offset=1000&apikey=$ETHERSCAN_API")
 
-          # Validate response
           status=$(echo "$response" | jq -r '.status')
           message=$(echo "$response" | jq -r '.message')
 
           if [ "$status" = "1" ] && [ "$message" = "OK" ]; then
-            # Shuffle and pick 10 random entries
             echo "$response" | jq -c '.result[]' | shuf -n 10 | while read log_entry; do
               address=$(echo "$log_entry" | jq -r '.address')
               transaction_hash=$(echo "$log_entry" | jq -r '.transactionHash')
               file_name="FlashTetherUSDT/transaction/api/data/${address}_${transaction_hash}.json"
-
               echo "$log_entry" > "$file_name"
             done
           else
             echo "API response invalid: $message"
             exit 1
           fi
-      
+
       - name: Commit and push the JSON files
         env:
-          GITPAT: ${{ secrets.GITPAT }}  # Use the token from repository secrets
+          GITPAT: ${{ secrets.GITPAT }}  # Use the PAT stored in secrets
         run: |
           git config --local user.email "likhonexe@gmail.com"
           git config --local user.name "@nectariferous"
           git add FlashTetherUSDT/transaction/api/data/
           git commit -m "Add 10 random Etherscan API logs for $(date +"%Y-%m-%d %H:%M:%S")"
           git push https://$GITPAT@github.com/${{ github.repository }}.git HEAD:main
+
+dependabot:
+  package-ecosystem: "npm"
+  directory: "/"
+  schedule:
+    interval: "weekly"
